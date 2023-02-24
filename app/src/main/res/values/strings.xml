@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">FitnessApp</string>
+    <string-array name="filter_options">
+        <item>Date</item>
+        <item>Running Time</item>
+        <item>Distance</item>
+        <item>Average Speed</item>
+        <item>Calories Burned</item>
+    </string-array>
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyBkSxPFLAcL6fr8yQ06aodmTIGx5JDCBA4</string>
+    <string name="table_name">running_table</string>
 </resources>
