@@ -20,6 +20,10 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildFeatures {
+        viewBinding = true
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -87,7 +91,7 @@ dependencies {
     // Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'
 
-
+    implementation "androidx.lifecycle:lifecycle-service:2.2.0"
     // MPAndroidChart
     // implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 }
