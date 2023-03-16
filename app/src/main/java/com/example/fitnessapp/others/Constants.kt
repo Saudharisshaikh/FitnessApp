@@ -8,5 +8,13 @@ object Constants {
     const val PAUSE_SERVICE = "ACTION_PAUSE_SERVICE"
     const val STOP_SERVICE = "ACTION_STOP_SERIVICE"
 
+    val NOTIFICATION_CHANNEL_ID = "notificationChannel"
+    val NOTIFICATION_CHANNEL_NAME = "notification"
+    val NOTIFICATION_ID = 100
+    const val ACTION_SHOW_TRACKING_FRAGMENT = "ACTION_SHOW_TRACKING_FRAGMENT"
+    const val LOCTION_UPDATE_INTERVAL = 5000
+    const val LOCATION_FASTEST_UPDATE = 2000
+
+
 
 }

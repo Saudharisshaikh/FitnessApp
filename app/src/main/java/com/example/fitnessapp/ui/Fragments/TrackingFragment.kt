@@ -1,5 +1,8 @@
 
 package com.example.fitnessapp.ui.Fragments
+import android.app.Activity
+import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -9,6 +12,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.example.fitnessapp.R
 import com.example.fitnessapp.databinding.FragmentTrackingBinding
+import com.example.fitnessapp.others.Constants.ACTION_SHOW_TRACKING_FRAGMENT
 import com.example.fitnessapp.others.Constants.START_OR_RESUME_SERVICE
 import com.example.fitnessapp.services.TrackingService
 import com.example.fitnessapp.ui.Fragments.viewmodels.MainViewModel
@@ -43,9 +47,10 @@ import dagger.hilt.android.AndroidEntryPoint
 
    fragmentTrackingBinding.mapView.onCreate(savedInstanceState)
 
-    fragmentTrackingBinding.btnFinishRun.setOnClickListener {
+    fragmentTrackingBinding.btnToggleRun.setOnClickListener {
 
      sendCommandToService(START_OR_RESUME_SERVICE)
+     Log.d("--sendCommandToService: ","done")
     }
 
 
@@ -88,12 +93,13 @@ import dagger.hilt.android.AndroidEntryPoint
    fragmentTrackingBinding.mapView.onSaveInstanceState(outState)
   }
 
-  private fun sendCommandToService(action:String){
+  private fun sendCommandToService(action:String) {
 
-   Log.d("--starts", "sendCommandToService: ")
-    val intent:Intent = Intent(requireContext(),TrackingService::class.java)
-    intent.action = action
-    requireContext().startService(intent)
+
+   val intent: Intent = Intent(requireContext(), TrackingService::class.java)
+   intent.action = action
+   requireContext().startService(intent)
   }
+
 
 }
