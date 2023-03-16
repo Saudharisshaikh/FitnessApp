@@ -20,6 +20,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.example.fitnessapp.R
 import com.example.fitnessapp.others.Constants
+import com.example.fitnessapp.others.Constants.LOCATION_FASTEST_UPDATE
+import com.example.fitnessapp.others.Constants.LOCTION_UPDATE_INTERVAL
 import com.example.fitnessapp.others.Constants.NOTIFICATION_CHANNEL_ID
 import com.example.fitnessapp.others.Constants.NOTIFICATION_CHANNEL_NAME
 import com.example.fitnessapp.others.Constants.NOTIFICATION_ID
@@ -32,6 +34,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY
 import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.Priority
 import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
 import com.google.android.gms.maps.model.LatLng
 import timber.log.Timber
@@ -119,15 +122,12 @@ typealias Polylines = MutableList<Polyline>
     private fun updateLocationTracking(isTracking:Boolean){
         if(isTracking){
           if(TrackingUtility.hasLocationPermission(this)){
-             val  locationRequest = LocationRequest()
-              locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-              locationRequest.setInterval(UPDATE_INTERVAL)
-              locationRequest.setFastestInterval(FASTEST_INTERVAL)
-//              val request = com.google.android.gms.location.LocationRequest().apply{
-//                interval = LOCTION_UPDATE_INTERVAL
-//                fastestInterval = LOCATION_FASTEST_UPDATE
-//                priority = PRIORITY_HIGH_ACCURACY
-//              }
+
+              val request = LocationRequest().apply{
+                interval = LOCTION_UPDATE_INTERVAL
+                fastestInterval = LOCATION_FASTEST_UPDATE
+                priority = PRIORITY_HIGH_ACCURACY
+              }
               fusedLocationProviderClient.requestLocationUpdates(
                   request,
                   callBack,
