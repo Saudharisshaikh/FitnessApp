@@ -34,6 +34,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY
 import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
 import com.google.android.gms.maps.model.LatLng
@@ -60,6 +61,7 @@ typealias Polylines = MutableList<Polyline>
         pathPoints.postValue(mutableListOf())
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
           if(intent != null){
@@ -123,10 +125,10 @@ typealias Polylines = MutableList<Polyline>
         if(isTracking){
           if(TrackingUtility.hasLocationPermission(this)){
 
-              val request = LocationRequest().apply{
-                interval = LOCTION_UPDATE_INTERVAL
-                fastestInterval = LOCATION_FASTEST_UPDATE
-                priority = PRIORITY_HIGH_ACCURACY
+              val request = com.google.android.gms.location.LocationRequest().apply{
+                interval = LOCTION_UPDATE_INTERVAL.toLong()
+                fastestInterval = LOCATION_FASTEST_UPDATE.toLong()
+                priority = Priority.PRIORITY_HIGH_ACCURACY
               }
               fusedLocationProviderClient.requestLocationUpdates(
                   request,
@@ -183,7 +185,7 @@ typealias Polylines = MutableList<Polyline>
     override fun onCreate() {
         super.onCreate()
         postInitialValues()
-        fusedLocationProviderClient = FusedLocationProviderClient(this)
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         isTracking.observe(this, Observer {
             updateLocationTracking(it)
         })
