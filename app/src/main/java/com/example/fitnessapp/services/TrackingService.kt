@@ -12,6 +12,7 @@ import android.location.LocationRequest
 import android.os.Build
 import android.os.Looper
 import android.view.Gravity.apply
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.view.GravityCompat.apply
@@ -75,11 +76,13 @@ typealias Polylines = MutableList<Polyline>
                       }
                       else{
                           d("--START|RESUMESERVICE")
+                          startForegroundService()
                       }
 
                   }
                   PAUSE_SERVICE ->{
                       d("--PAUSESERVICE")
+                      pauseService()
                   }
                   STOP_SERVICE ->{
                       d("--STOP")
@@ -107,6 +110,10 @@ typealias Polylines = MutableList<Polyline>
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
 
+
+    private fun pauseService(){
+        isTracking.postValue(false)
+    }
     private fun addPathPoints(location: Location?){
         location?.let{
          val pos = LatLng(location.latitude,location.longitude)
@@ -151,6 +158,8 @@ typealias Polylines = MutableList<Polyline>
                     for(location in locations){
                         addPathPoints(location)
                         Timber.d("--newLocation:${location.latitude},${location.longitude}")
+
+
                     }
 
                 }

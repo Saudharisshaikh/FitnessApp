@@ -4,30 +4,48 @@ import android.app.Activity
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import com.example.fitnessapp.R
 import com.example.fitnessapp.databinding.FragmentTrackingBinding
 import com.example.fitnessapp.others.Constants.ACTION_SHOW_TRACKING_FRAGMENT
+import com.example.fitnessapp.others.Constants.MAP_ZOOM
+import com.example.fitnessapp.others.Constants.PAUSE_SERVICE
+import com.example.fitnessapp.others.Constants.POLYLINE_COLOR
+import com.example.fitnessapp.others.Constants.POLY_LINE_WIDTH
 import com.example.fitnessapp.others.Constants.START_OR_RESUME_SERVICE
+import com.example.fitnessapp.services.Polylines
 import com.example.fitnessapp.services.TrackingService
 import com.example.fitnessapp.ui.Fragments.viewmodels.MainViewModel
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.Polyline
+import com.google.android.gms.maps.model.PolylineOptions
 import dagger.hilt.android.AndroidEntryPoint
 
   private lateinit var  mainViewModel: MainViewModel
 
   private lateinit var fragmentTrackingBinding: FragmentTrackingBinding
 
+  private var myPolyline:Polylines = mutableListOf()
+
   private var map:GoogleMap? = null
+
+//   var isTracking = false
+
+private var pathPoints = mutableListOf<Polyline>()
 
  @AndroidEntryPoint
  class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
+
+  private var isTracking:Boolean = false
 
   override fun onCreateView(
    inflater: LayoutInflater,
@@ -49,7 +67,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
     fragmentTrackingBinding.btnToggleRun.setOnClickListener {
 
-     sendCommandToService(START_OR_RESUME_SERVICE)
+      toggleRun()
      Log.d("--sendCommandToService: ","done")
     }
 
@@ -57,7 +75,9 @@ import dagger.hilt.android.AndroidEntryPoint
    fragmentTrackingBinding.mapView.getMapAsync{
 
     map = it
+    addAllPolylines()
    }
+   subscribeToObservers()
   }
 
   override fun onResume() {
@@ -81,6 +101,106 @@ import dagger.hilt.android.AndroidEntryPoint
   override fun onPause() {
    super.onPause()
    fragmentTrackingBinding.mapView.onPause()
+  }
+
+  // when user change its position camera can also move with it.
+  private fun moveCameraUser(){
+
+   if(pathPoints.isNotEmpty() && pathPoints.last().points.isNotEmpty()){
+
+    map?.animateCamera(
+     CameraUpdateFactory.newLatLng(
+      pathPoints.last().points.last()
+
+     )
+    )
+   }
+  }
+
+  private fun subscribeToObservers(){
+
+   TrackingService.isTracking.observe(viewLifecycleOwner, Observer {
+    updateTracking(it)
+   })
+   TrackingService.pathPoints.observe(viewLifecycleOwner, Observer {
+
+    myPolyline = it
+     // your code here
+
+    addLatestPolylines()
+    moveCameraUser()
+
+   })
+
+  }
+  private fun toggleRun(){
+   if(isTracking){
+    sendCommandToService(PAUSE_SERVICE)
+   }
+   else{
+    sendCommandToService(START_OR_RESUME_SERVICE)
+   }
+  }
+
+  // to get live date from our service
+  private fun updateTracking(isTracking:Boolean){
+   this.isTracking = isTracking
+   if(!isTracking){
+    fragmentTrackingBinding.btnToggleRun.text = "Start"
+    fragmentTrackingBinding.btnFinishRun.visibility = View.VISIBLE
+   }
+   else{
+    fragmentTrackingBinding.btnToggleRun.text = "Stop"
+    fragmentTrackingBinding.btnFinishRun.visibility = View.GONE
+   }
+  }
+
+
+  // if user rotate device activity will recreate and we loss polyline data
+  // so to get all previous polylines after rotating we get from this function.
+
+  private fun  addAllPolylines(){
+
+   val googlePolylines: MutableList<com.google.android.gms.maps.model.Polyline> =
+    myPolyline.map { polyline ->
+     val options = PolylineOptions()
+      .color(POLYLINE_COLOR)
+      .width(POLY_LINE_WIDTH)
+     options.addAll(polyline)
+     map?.addPolyline(options)
+    } as MutableList<Polyline>
+
+
+
+//   for(polyline  in  pathPoints) {
+//    val polylineOptions: PolylineOptions = PolylineOptions()
+//     .color(POLYLINE_COLOR)
+//     .width(POLY_LINE_WIDTH)
+//     .addAll(polyline)
+//    map?.addPolyline(polylineOptions)
+//   }
+
+  }
+
+  // to get latest path of polyline
+  private fun addLatestPolylines(){
+
+
+
+   if(myPolyline.isNotEmpty() && myPolyline.last().size > 1){
+
+    val preLastLong = myPolyline.last()[myPolyline.last().size-2] // it represent 2nd last location of map
+    val lastLatLong  = myPolyline.last().last() // it represent last location of map
+    // once we get both 2nd last and last location we can draw latest polyline between them.
+
+    val polyOption = PolylineOptions()
+     .color(POLYLINE_COLOR)
+     .width(POLY_LINE_WIDTH)
+     .add(preLastLong)
+     .add(lastLatLong)
+
+    map?.addPolyline(polyOption)
+   }
   }
 
   override fun onLowMemory() {

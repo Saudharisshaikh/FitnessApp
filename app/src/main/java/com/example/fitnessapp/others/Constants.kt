@@ -1,5 +1,7 @@
 package com.example.fitnessapp.others
 
+import android.graphics.Color
+
 object Constants {
     val RUNNING_DATABASE_NAME = "running_database.db"
     val REQUEST_CODE_FOR_PERMISSON = 101;
@@ -15,6 +17,8 @@ object Constants {
     const val LOCTION_UPDATE_INTERVAL = 5000
     const val LOCATION_FASTEST_UPDATE = 2000
 
-
+    const val POLYLINE_COLOR = Color.RED
+    const val POLY_LINE_WIDTH = 8f
+    const val MAP_ZOOM = 15f
 
 }
