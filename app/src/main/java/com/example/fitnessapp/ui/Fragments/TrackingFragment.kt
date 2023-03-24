@@ -161,6 +161,8 @@ private var pathPoints = mutableListOf<Polyline>()
 
   private fun  addAllPolylines(){
 
+   Log.d("--polyLines", "addAllPolylines: ")
+
    val googlePolylines: MutableList<com.google.android.gms.maps.model.Polyline> =
     myPolyline.map { polyline ->
      val options = PolylineOptions()
