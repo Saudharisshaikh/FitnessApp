@@ -25,7 +25,10 @@ class RunFragment : Fragment(R.layout.fragment_run),EasyPermissions.PermissionCa
         requestPermissions()
 
         val floatActionButton :FloatingActionButton = view.findViewById(R.id.fab)
-        floatActionButton.findNavController().navigate(R.id.action_runFragment_to_trackingFragment)
+        floatActionButton.setOnClickListener {
+            floatActionButton.findNavController().navigate(R.id.action_runFragment_to_trackingFragment)
+        }
+
     }
 
    private fun requestPermissions(){

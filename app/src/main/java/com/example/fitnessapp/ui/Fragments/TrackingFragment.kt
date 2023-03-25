@@ -106,15 +106,21 @@ private var pathPoints = mutableListOf<Polyline>()
   // when user change its position camera can also move with it.
   private fun moveCameraUser(){
 
-   if(pathPoints.isNotEmpty() && pathPoints.last().points.isNotEmpty()){
+   val googlePolylines: MutableList<com.google.android.gms.maps.model.Polyline> =
+    myPolyline.map { polyline ->
 
-    map?.animateCamera(
-     CameraUpdateFactory.newLatLng(
-      pathPoints.last().points.last()
+     if(myPolyline.isNotEmpty() && myPolyline.last().isNotEmpty()){
 
-     )
-    )
-   }
+      map?.animateCamera(
+       CameraUpdateFactory.newLatLngZoom(
+        myPolyline.last().last(),
+        MAP_ZOOM
+       ))
+     }
+
+    } as MutableList<Polyline>
+
+
   }
 
   private fun subscribeToObservers(){
