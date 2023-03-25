@@ -29,6 +29,7 @@ import com.example.fitnessapp.others.Constants.NOTIFICATION_ID
 import com.example.fitnessapp.others.Constants.PAUSE_SERVICE
 import com.example.fitnessapp.others.Constants.START_OR_RESUME_SERVICE
 import com.example.fitnessapp.others.Constants.STOP_SERVICE
+import com.example.fitnessapp.others.Constants.TIMER_INTERVAL
 import com.example.fitnessapp.others.TrackingUtility
 import com.example.fitnessapp.ui.Fragments.MainActivity
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -39,6 +40,10 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import timber.log.Timber.d
 
@@ -51,10 +56,15 @@ typealias Polylines = MutableList<Polyline>
 
     private var isFirstRun = true
 
+    private val timeRunInSecond  = MutableLiveData<Long>()
+
     companion object{
+
+        val timeRunInMilliSecond = MutableLiveData<Long>()
         val isTracking = MutableLiveData<Boolean>()
     // inner lines are polylines and there several  of polylines
         val pathPoints = MutableLiveData<Polylines>()
+
     }
 
     private fun postInitialValues(){
@@ -76,7 +86,10 @@ typealias Polylines = MutableList<Polyline>
                       }
                       else{
                           d("--START|RESUMESERVICE")
-                          startForegroundService()
+                          CoroutineScope(Dispatchers.Main).launch {
+                              startTimer()
+                          }
+
                       }
 
                   }
@@ -93,6 +106,39 @@ typealias Polylines = MutableList<Polyline>
 
         return super.onStartCommand(intent, flags, startId)
     }
+
+    private var isTimeEnable = false
+    private var lapTime = 0L
+     private var timeRun = 0L
+     private var timeStarted = 0L
+     private var lastSecondTimeStamp = 0L
+
+     @RequiresApi(Build.VERSION_CODES.Q)
+     private suspend fun startTimer(){
+
+       addEmptyPolyline()
+       isTracking.postValue(true);
+       timeStarted = System.currentTimeMillis()
+       isTimeEnable = true
+
+       CoroutineScope(Dispatchers.Main).launch {
+
+           while (isTracking.value!!){
+            // time difference between now and stated time
+            lapTime = System.currentTimeMillis() - timeStarted
+            // post the new lap time
+            timeRunInMilliSecond.postValue(timeRun+lapTime)
+               if(timeRunInMilliSecond.value!! >= lastSecondTimeStamp){
+
+                   timeRunInSecond.postValue(timeRunInSecond.value!!+1)
+                   lastSecondTimeStamp += 1000L
+
+               }
+           }
+       }
+         delay(TIMER_INTERVAL)
+         timeRun +=lapTime
+     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun addEmptyPolyline () = pathPoints.value?.apply{
@@ -170,7 +216,7 @@ typealias Polylines = MutableList<Polyline>
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun startForegroundService(){
 
-        addEmptyPolyline()
+
         isTracking.postValue(true)
 
        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE)
