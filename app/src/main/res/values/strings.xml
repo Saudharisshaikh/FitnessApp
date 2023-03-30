@@ -7,6 +7,6 @@
         <item>Average Speed</item>
         <item>Calories Burned</item>
     </string-array>
-    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyDz1jWC2ivfrJBKVzux0xG2ExkvuXXRvyo</string>
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyCFzcDu3sly33gozVQSGzNwXJ0xH4gKH7k</string>
     <string name="table_name">running_table</string>
 </resources>

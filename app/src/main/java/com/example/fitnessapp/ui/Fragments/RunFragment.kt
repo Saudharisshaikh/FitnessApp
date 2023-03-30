@@ -18,7 +18,7 @@ import pub.devrel.easypermissions.EasyPermissions
 //@AndroidEntryPoint
 class RunFragment : Fragment(R.layout.fragment_run),EasyPermissions.PermissionCallbacks {
 
-  //  private val mainViewModel: MainViewModel by viewModels()
+    //  private val mainViewModel: MainViewModel by viewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -31,34 +31,34 @@ class RunFragment : Fragment(R.layout.fragment_run),EasyPermissions.PermissionCa
 
     }
 
-   private fun requestPermissions(){
+    private fun requestPermissions(){
 
-       if(TrackingUtility.hasLocationPermission(requireContext())){
-           return
-       }
+        if(TrackingUtility.hasLocationPermission(requireContext())){
+            return
+        }
 
-       if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
-         EasyPermissions.requestPermissions(this,
-            "You need to accept this permission to use this app.",
-             REQUEST_CODE_FOR_PERMISSON,
-             Manifest.permission.ACCESS_FINE_LOCATION,
-             Manifest.permission.ACCESS_COARSE_LOCATION
-             )
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
+            EasyPermissions.requestPermissions(this,
+                "You need to accept this permission to use this app.",
+                REQUEST_CODE_FOR_PERMISSON,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
 
 
-       }
-       else{
+        }
+        else{
 
-           EasyPermissions.requestPermissions(this,
-               "You need to accept this permission to use this app.",
-               REQUEST_CODE_FOR_PERMISSON,
-               Manifest.permission.ACCESS_FINE_LOCATION,
-               Manifest.permission.ACCESS_COARSE_LOCATION,
-               Manifest.permission.ACCESS_BACKGROUND_LOCATION
-           )
-       }
+            EasyPermissions.requestPermissions(this,
+                "You need to accept this permission to use this app.",
+                REQUEST_CODE_FOR_PERMISSON,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            )
+        }
 
-   }
+    }
 
     override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
 
@@ -70,7 +70,7 @@ class RunFragment : Fragment(R.layout.fragment_run),EasyPermissions.PermissionCa
             AppSettingsDialog.Builder(this).build().show()
         }
         else{
-           requestPermissions()
+            requestPermissions()
         }
     }
 
