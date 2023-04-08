@@ -11,10 +11,12 @@ import android.util.Log
 import android.view.*
 import androidx.core.view.get
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import com.example.fitnessapp.R
 import com.example.fitnessapp.databinding.FragmentTrackingBinding
+import com.example.fitnessapp.db.Run
 import com.example.fitnessapp.others.Constants.ACTION_SHOW_TRACKING_FRAGMENT
 import com.example.fitnessapp.others.Constants.MAP_ZOOM
 import com.example.fitnessapp.others.Constants.PAUSE_SERVICE
@@ -28,17 +30,23 @@ import com.example.fitnessapp.services.TrackingService
 import com.example.fitnessapp.ui.Fragments.viewmodels.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Polyline
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.dialog.MaterialDialogs
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.Calendar
+import javax.inject.Inject
+import kotlin.math.round
 
-private lateinit var  mainViewModel: MainViewModel
+
 
 private lateinit var fragmentTrackingBinding: FragmentTrackingBinding
 
-private var myPolyline:Polylines = mutableListOf()
+
 
 private var map:GoogleMap? = null
 
@@ -52,10 +60,13 @@ private var pathPoints = mutableListOf<Polyline>()
 @AndroidEntryPoint
 class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
+ private val  mainViewModel: MainViewModel by viewModels()
+ private var myPolyline:Polylines = mutableListOf()
+
  private var curTimeInMillis = 0L
- private var isTracking:Boolean = false
+ private var isTracking: Boolean = false
 
-
+ private val weight = 80f
 
  override fun onCreateView(
   inflater: LayoutInflater,
@@ -63,31 +74,30 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
   savedInstanceState: Bundle?
  ): View? {
 
-  fragmentTrackingBinding = FragmentTrackingBinding.inflate(inflater,container,false)
+  fragmentTrackingBinding = FragmentTrackingBinding.inflate(inflater, container, false)
   setHasOptionsMenu(true)
   return fragmentTrackingBinding.root
  }
 
 
-
  override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
   super.onCreateOptionsMenu(menu, inflater)
- inflater.inflate(R.menu.tracking_menu,menu)
-  cancelMenu =menu;
+  inflater.inflate(R.menu.tracking_menu, menu)
+  cancelMenu = menu;
 
  }
 
- private fun showCancelDialog(){
+ private fun showCancelDialog() {
 
-  val cancelDialog = MaterialAlertDialogBuilder(requireContext(),R.style.AlertDialogTheme)
+  val cancelDialog = MaterialAlertDialogBuilder(requireContext(), R.style.AlertDialogTheme)
    .setTitle("Cancel the Run?")
    .setMessage("Are you sure to cancel the current and delete its data?")
    .setIcon(R.drawable.ic_delete)
-   .setPositiveButton("Yes"){_,_->
+   .setPositiveButton("Yes") { _, _ ->
 
     stopRun();
    }
-   .setNegativeButton("No"){dialogInteface,_,->
+   .setNegativeButton("No") { dialogInteface, _, ->
 
     dialogInteface.cancel()
 
@@ -96,8 +106,8 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
  }
 
  override fun onOptionsItemSelected(item: MenuItem): Boolean {
-  when(item.itemId){
-   R.id.cancel_run ->{
+  when (item.itemId) {
+   R.id.cancel_run -> {
     showCancelDialog()
    }
   }
@@ -106,13 +116,13 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
  private fun stopRun() {
 
- sendCommandToService(STOP_SERVICE)
- findNavController().navigate(R.id.action_trackingFragment_to_runFragment)
+  sendCommandToService(STOP_SERVICE)
+  findNavController().navigate(R.id.action_trackingFragment_to_runFragment)
  }
 
  override fun onPrepareOptionsMenu(menu: Menu) {
   super.onPrepareOptionsMenu(menu)
-  if(curTimeInMillis > 0L){
+  if (curTimeInMillis > 0L) {
    cancelMenu?.get(0)?.isVisible = true
   }
  }
@@ -125,11 +135,18 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
   fragmentTrackingBinding.btnToggleRun.setOnClickListener {
 
    toggleRun()
-   Log.d("--sendCommandToService: ","done")
+   Log.d("--sendCommandToService: ", "done")
+  }
+
+  fragmentTrackingBinding.btnFinishRun.setOnClickListener {
+
+   zoom0ToSeeWholeTrack()
+   endRunAndSaveToDb()
+
   }
 
 
-  fragmentTrackingBinding.mapView.getMapAsync{
+  fragmentTrackingBinding.mapView.getMapAsync {
 
    map = it
    addAllPolylines()
@@ -149,7 +166,6 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
  }
 
 
-
  override fun onStop() {
   super.onStop()
   fragmentTrackingBinding.mapView.onStop()
@@ -161,18 +177,19 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
  }
 
  // when user change its position camera can also move with it.
- private fun moveCameraUser(){
+ private fun moveCameraUser() {
 
   val googlePolylines: MutableList<com.google.android.gms.maps.model.Polyline> =
    myPolyline.map { polyline ->
 
-    if(myPolyline.isNotEmpty() && myPolyline.last().isNotEmpty()){
+    if (myPolyline.isNotEmpty() && myPolyline.last().isNotEmpty()) {
 
      map?.animateCamera(
       CameraUpdateFactory.newLatLngZoom(
        myPolyline.last().last(),
        MAP_ZOOM
-      ))
+      )
+     )
     }
 
    } as MutableList<Polyline>
@@ -180,7 +197,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
  }
 
- private fun subscribeToObservers(){
+ private fun subscribeToObservers() {
 
   TrackingService.isTracking.observe(viewLifecycleOwner, Observer {
    updateTracking(it)
@@ -201,24 +218,23 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
   })
 
  }
- private fun toggleRun(){
-  if(isTracking){
+
+ private fun toggleRun() {
+  if (isTracking) {
    cancelMenu?.get(0)?.isVisible = true
    sendCommandToService(PAUSE_SERVICE)
-  }
-  else{
+  } else {
    sendCommandToService(START_OR_RESUME_SERVICE)
   }
  }
 
  // to get live date from our service
- private fun updateTracking(isTracking:Boolean){
+ private fun updateTracking(isTracking: Boolean) {
   this.isTracking = isTracking
-  if(!isTracking){
+  if (!isTracking) {
    fragmentTrackingBinding.btnToggleRun.text = "Start"
    fragmentTrackingBinding.btnFinishRun.visibility = View.VISIBLE
-  }
-  else{
+  } else {
    cancelMenu?.get(0)?.isVisible = true
    fragmentTrackingBinding.btnToggleRun.text = "Stop"
    fragmentTrackingBinding.btnFinishRun.visibility = View.GONE
@@ -229,7 +245,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
  // if user rotate device activity will recreate and we loss polyline data
  // so to get all previous polylines after rotating we get from this function.
 
- private fun  addAllPolylines(){
+ private fun addAllPolylines() {
 
   val googlePolylines: MutableList<com.google.android.gms.maps.model.Polyline> =
    myPolyline.map { polyline ->
@@ -241,7 +257,6 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
    } as MutableList<Polyline>
 
 
-
 //   for(polyline  in  pathPoints) {
 //    val polylineOptions: PolylineOptions = PolylineOptions()
 //     .color(POLYLINE_COLOR)
@@ -250,6 +265,53 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 //    map?.addPolyline(polylineOptions)
 //   }
 
+ }
+
+
+ private fun endRunAndSaveToDb(){
+
+  map?.snapshot {
+
+   var distaneInMeter = 0
+   for(polyline in myPolyline){
+
+    distaneInMeter += TrackingUtility.calculatePolylineLength(polyline).toInt()
+
+   }
+   val avgSpeed = round((distaneInMeter/1000f) / (curTimeInMillis / 1000f / 60 /60) * 10f) / 10f
+   val dateTime = Calendar.getInstance().timeInMillis
+   val caloriesBurned = ((distaneInMeter/1000f)*weight).toInt()
+   val run = Run(it, dateTime,avgSpeed,distaneInMeter,curTimeInMillis,caloriesBurned)
+   mainViewModel.insertRun(run)
+
+   Snackbar.make(requireActivity().findViewById(R.id.rootView),
+   "Run saved successfully",
+    Snackbar.LENGTH_LONG
+    ).show()
+
+   stopRun()
+  }
+
+ }
+
+
+ private fun zoom0ToSeeWholeTrack(){
+  val bounds = LatLngBounds.builder()
+
+  for(polyline in myPolyline){
+   for(pos: LatLng in polyline){
+    bounds.include(pos)
+   }
+  }
+
+  map?.moveCamera(
+   CameraUpdateFactory.newLatLngBounds(
+    bounds.build(),
+    fragmentTrackingBinding.mapView.width,
+    fragmentTrackingBinding.mapView.height,
+    (fragmentTrackingBinding.mapView.height * 0.05f).toInt()
+   )
+  )
  }
 
  // to get latest path of polyline
@@ -293,3 +355,5 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
 
 }
+
+
