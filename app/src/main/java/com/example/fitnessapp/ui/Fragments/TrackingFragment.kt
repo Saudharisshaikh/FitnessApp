@@ -66,7 +66,8 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
  private var curTimeInMillis = 0L
  private var isTracking: Boolean = false
 
- private val weight = 80f
+ @set: Inject
+  var weight = 80f
 
  override fun onCreateView(
   inflater: LayoutInflater,

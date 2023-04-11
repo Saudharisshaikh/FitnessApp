@@ -10,6 +10,11 @@ object Constants {
     const val PAUSE_SERVICE = "ACTION_PAUSE_SERVICE"
     const val STOP_SERVICE = "ACTION_STOP_SERIVICE"
 
+    val SHARED_PREFERENCE_NAME = "sharedPref"
+    val KEY_TOGGLE_FIRST = "KEY_TOGGLE"
+    val KEY_NAME = "KEY_NAME"
+    val KEY_WEIGHT = "KEY_WEIGHT"
+
     val NOTIFICATION_CHANNEL_ID = "notificationChannel"
     val NOTIFICATION_CHANNEL_NAME = "notification"
     val NOTIFICATION_ID = 100
