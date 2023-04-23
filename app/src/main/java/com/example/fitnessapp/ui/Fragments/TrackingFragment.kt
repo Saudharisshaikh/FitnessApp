@@ -43,6 +43,7 @@ import javax.inject.Inject
 import kotlin.math.round
 
 
+private var CANCEL_DIALOG_TAG = "cancel_dialog_tag"
 
 private lateinit var fragmentTrackingBinding: FragmentTrackingBinding
 
@@ -90,20 +91,27 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
  private fun showCancelDialog() {
 
-  val cancelDialog = MaterialAlertDialogBuilder(requireContext(), R.style.AlertDialogTheme)
-   .setTitle("Cancel the Run?")
-   .setMessage("Are you sure to cancel the current and delete its data?")
-   .setIcon(R.drawable.ic_delete)
-   .setPositiveButton("Yes") { _, _ ->
 
-    stopRun();
-   }
-   .setNegativeButton("No") { dialogInteface, _, ->
+   var cancelTrackingDialog : CancelTrackingDialog = CancelTrackingDialog()
+       cancelTrackingDialog.setLisener {
+        stopRun()
+       }
+       cancelTrackingDialog.show(parentFragmentManager,CANCEL_DIALOG_TAG)
 
-    dialogInteface.cancel()
-
-   }.create()
-  cancelDialog.show()
+//  val cancelDialog = MaterialAlertDialogBuilder(requireContext(), R.style.AlertDialogTheme)
+//   .setTitle("Cancel the Run?")
+//   .setMessage("Are you sure to cancel the current and delete its data?")
+//   .setIcon(R.drawable.ic_delete)
+//   .setPositiveButton("Yes") { _, _ ->
+//
+//    stopRun();
+//   }
+//   .setNegativeButton("No") { dialogInteface, _, ->
+//
+//    dialogInteface.cancel()
+//
+//   }.create()
+//  cancelDialog.show()
  }
 
  override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -117,6 +125,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
  private fun stopRun() {
 
+  fragmentTrackingBinding.tvTimer.text = "00.00.00.00"
   sendCommandToService(STOP_SERVICE)
   findNavController().navigate(R.id.action_trackingFragment_to_runFragment)
  }
@@ -134,6 +143,17 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
   fragmentTrackingBinding.mapView.onCreate(savedInstanceState)
 
   fragmentTrackingBinding.btnToggleRun.setOnClickListener {
+
+   if(savedInstanceState != null){
+
+    val cancelDialog = parentFragmentManager
+     .findFragmentByTag(CANCEL_DIALOG_TAG)
+            as CancelTrackingDialog?
+    cancelDialog?.setLisener {
+     stopRun()
+    }
+
+   }
 
    toggleRun()
    Log.d("--sendCommandToService: ", "done")
@@ -232,10 +252,11 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
  // to get live date from our service
  private fun updateTracking(isTracking: Boolean) {
   this.isTracking = isTracking
-  if (!isTracking) {
+  if (!isTracking && curTimeInMillis > 0L) {
    fragmentTrackingBinding.btnToggleRun.text = "Start"
    fragmentTrackingBinding.btnFinishRun.visibility = View.VISIBLE
-  } else {
+  }
+  else if(isTracking) {
    cancelMenu?.get(0)?.isVisible = true
    fragmentTrackingBinding.btnToggleRun.text = "Stop"
    fragmentTrackingBinding.btnFinishRun.visibility = View.GONE
